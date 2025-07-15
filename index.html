@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wait for a Moment</title>
+  <!-- Fonts -->
+  <link href="https://fonts.cdnfonts.com/css/birthday-balon-tfb?styles=27380" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      background: #E6E6FA;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #balloon-container {
+      height: 100vh;
+      padding: 1em;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      overflow: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 0;
+      display: none; /* Initially hidden */
+    }
+
+    .balloon {
+      height: 125px;
+      width: 105px;
+      border-radius: 75% 75% 70% 70%;
+      position: relative;
+      animation: float 12s linear infinite;
+    }
+
+    .balloon:before {
+      content: "";
+      height: 75px;
+      width: 1px;
+      background-color: #FDFD96;
+      display: block;
+      position: absolute;
+      top: 125px;
+      left: 0;
+      right: 0;
+      margin: auto;
+    }
+
+    .balloon:after {
+      content: "▲";
+      text-align: center;
+      display: block;
+      position: absolute;
+      color: inherit;
+      top: 120px;
+      left: 0;
+      right: 0;
+      margin: auto;
+    }
+
+    @keyframes float {
+      from {
+        transform: translateY(100vh);
+        opacity: 1;
+      }
+      to {
+        transform: translateY(-300vh);
+        opacity: 0;
+      }
+    }
+
+    #message {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 0 10%;
+      margin-top: 2%;
+      box-sizing: border-box;
+    }
+
+    #message h1 {
+      font-size: calc(14px + 7vw);
+      color: #f72424;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      font-family: 'birthday balon tfb', sans-serif;
+      margin: 0;
+    }
+
+    #message p {
+      font-size: calc(8px + 3vw);
+      font-weight: bold;
+      color: #333;
+      font-family: 'Dancing Script', cursive;
+      margin-top: 10px;
+    }
+
+    #curtain {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 1);
+      z-index: 10;
+      transition: top 3s ease-in-out, height 3s ease-in-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    #curtain.open {
+      top: 100%;
+      height: 100%;
+    }
+
+    #curtain h2 {
+      color: #fff;
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.5rem;
+      margin-top: 20px;
+    }
+
+    #countdown {
+      color: white;
+      font-size: 2rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="curtain">
+    <h2 id="curtainText">Secret will be Revealed Soon!</h2>
+    <div id="countdown">00:00:00</div>
+  </div>
+
+  <div id="message">
+    <h1>Happy Birthday Aruu!</h1>
+    <p>Wishing you all the happiness in the world! 🎉❤ </p>
+  </div>
+
+  <div id="balloon-container"></div>
+
+  <!-- Music Play Button -->
+  <button id="playMusicBtn" style="display: none;">🎵 Play Music</button>
+
+  <!-- Audio element to play Happy Birthday song -->
+  <audio id="birthdayAudio" preload="auto">
+    <source src="https://raw.githubusercontent.com/From-Hassan/hey/main/happy-birthday.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const curtain = document.getElementById('curtain');
+    const curtainText = document.getElementById('curtainText');
+    const countdownElement = document.getElementById('countdown');
+    const balloonContainer = document.getElementById('balloon-container');
+    const birthdayAudio = document.getElementById('birthdayAudio');
+    const playMusicBtn = document.getElementById('playMusicBtn');
+
+    const target = new Date('2024-11-30T00:00:00');                                    //edit time and date
+    const isCountdownComplete = localStorage.getItem('countdownComplete') === 'true';
+
+    // Position "Play Music" button in the top-right corner
+    playMusicBtn.style.position = "fixed";
+    playMusicBtn.style.top = "20px";
+    playMusicBtn.style.right = "20px";
+    playMusicBtn.style.padding = "10px 20px";
+    playMusicBtn.style.fontSize = "1rem";
+    playMusicBtn.style.backgroundColor = "#f72424";
+    playMusicBtn.style.color = "#fff";
+    playMusicBtn.style.border = "none";
+    playMusicBtn.style.cursor = "pointer";
+    playMusicBtn.style.borderRadius = "5px";
+
+    if (isCountdownComplete) {
+      startCelebration();
+    } else {
+      startCountdown();
+    }
+
+    function startCountdown() {
+      function updateCountdown() {
+        const now = new Date();
+        const difference = target - now;
+
+        if (difference <= 0) {
+          localStorage.setItem('countdownComplete', 'true');
+          startCelebration();
+          clearInterval(countdownInterval);
+        } else {
+          const hours = String(Math.floor(difference / (1000 * 60 * 60))).padStart(2, "0");
+          const minutes = String(Math.floor((difference / (1000 * 60)) % 60)).padStart(2, "0");
+          const seconds = String(Math.floor((difference / 1000) % 60)).padStart(2, "0");
+          countdownElement.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+      }
+
+      const countdownInterval = setInterval(updateCountdown, 1000);
+      updateCountdown();
+    }
+
+    function startCelebration() {
+      curtain.classList.add("open");
+      curtainText.style.display = 'none';
+      countdownElement.style.display = 'none';
+      balloonContainer.style.display = 'block';
+      tryToPlayMusic();
+      createBalloons(40);
+    }
+
+    function tryToPlayMusic() {
+      birthdayAudio.play().catch(() => {
+        playMusicBtn.style.display = 'block';
+      });
+    }
+
+    playMusicBtn.addEventListener('click', () => {
+      birthdayAudio.play();
+      playMusicBtn.style.display = 'none';
+    });
+
+    function random(num) {
+      return Math.floor(Math.random() * num);
+    }
+
+    function getRandomStyles() {
+      const colors = ["#FF69B4", "#FFB6C1", "#DDA0DD","#800000", "#fa0202", "#FF1493", "#000000","#016320"];
+      const color = colors[random(colors.length)];
+      const ml = random(window.innerWidth - 100);
+      const dur = random(5) + 10;
+      return `background-color: ${color}; margin-left: ${ml}px; animation-duration: ${dur}s;`;
+    }
+
+    function createBalloons(num) {
+      for (let i = 0; i < num; i++) {
+        const balloon = document.createElement("div");
+        balloon.className = "balloon";
+        balloon.style.cssText = getRandomStyles();
+        balloonContainer.appendChild(balloon);
+      }
+    }
+
+    window.addEventListener('load', () => {
+      if (isCountdownComplete) {
+        tryToPlayMusic();
+      }
+    });
+  </script>
+</body>
+
+</html>
